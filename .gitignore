@@ -26,3 +26,7 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+
+# Specs are compiled from coffeescript
+spec/styleTweakerSpec.js
+spec/styleTweakerSpec.js.map
