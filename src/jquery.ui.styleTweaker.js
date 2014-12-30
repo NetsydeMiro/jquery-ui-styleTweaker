@@ -2,11 +2,10 @@ $.widget('netsyde.styleTweaker', {
 
   // default options
   options: {
-    target:           'body',
-    propertyFilter:   function(property){return true;}, 
+    targetSelector: 'body',
+    propertyFilter: '.*',
 
     html: {
-      panel:    "<div class='tweaker-panel'></div>",
       control:  "<div class='tweaker-control tweak-${property}'></div>", 
       label:    "<label for='tweak-${property}'>${property}</label>", 
       text:     "<input id='tweak-${property}' type='text' value='${value}' >", 
@@ -102,9 +101,26 @@ $.widget('netsyde.styleTweaker', {
 
   _create: function() {
 
-    var panel = this._createPanel().appendTo($(this.element[0])), 
-        target = this.options.target ? this.options.target[0] : panel,
-        properties = this._getProperties(target),
+    var panel = this.element.addClass('tweaker-panel');
+    this.target = $(this.options.targetSelector);
+
+    switch ($.type(this.options.propertyFilter)){
+      case 'string': 
+        this.propertyFilterFunction = function(cssPropertyName){
+          return cssPropertyName.match(this.options.propertyFilter);
+        };
+        break;
+      case 'function': 
+        this.propertyFilterFunction = this.options.propertyFilter;
+        break;
+      default: 
+        throw 'option targetSelector must be a regex string or string predicate function';
+    }
+
+    //var panel = this._createPanel().appendTo($(this.element[0])), 
+        //target = this.options.target ? this.options.target[0] : panel,
+
+    var properties = this._getProperties(this.target[0]),
         propIndex, propName, propValue, 
         control, inputId, label, input;
 
@@ -120,8 +136,17 @@ $.widget('netsyde.styleTweaker', {
         customBuilder : this.options.inputBuilders.standardText; 
 
         input = builder.create.call(this, property, value, builder.createArgs).appendTo(control);
-        builder.activate.call(this, input, this._standardChangeHandler(target, property), builder.activateArgs);
+        builder.activate.call(this, input, this._standardChangeHandler(this.target[0], property), builder.activateArgs);
     }
+  }, 
+
+  style: function(cssPropertyName, propertyValue){
+    //getter
+    if (!propertyValue)
+      return this.target.css(cssPropertyName);
+    //setter
+    else
+      this.target.css(cssPropertyName, propertyValue);
   }, 
 
   _createPanel: function(){
@@ -153,6 +178,22 @@ $.widget('netsyde.styleTweaker', {
     return cssPropertyNames.sort();
   }, 
 
+  _getJsPropertyName: __getJsPropertyName = function(cssPropertyName){
+    return cssPropertyName.replace(/\-(.)/g, function(match, p1){return p1.toUpperCase();});
+  }, 
+
+  _getCssPropertyValues: function(element, cssPropertyNames){
+    var computedStyles = document.defaultView.getComputedStyle(element);
+    var propertyValues = {};
+
+    // css property values are stored by their JS property name
+    cssPropertyNames.forEach(function(name){
+      propertyValues[name] = computedStyles[__getJsPropertyName(name)];
+    });
+
+    return propertyValues;
+  },
+
   // deprecate
   _getProperties: function(element){
     var properties = [],
@@ -164,7 +205,7 @@ $.widget('netsyde.styleTweaker', {
         // numeric keys have cssPropertyNames as values
         cssPropertyName = propertyBag[key];
         
-        if (this.options.propertyFilter(cssPropertyName)){
+        if (this.propertyFilterFunction(cssPropertyName)){
           // jsPropertyName keys have the actual property values
           jsPropertyName = this._jsPropertyName(cssPropertyName);
           // we want to format our properties as 
@@ -185,11 +226,6 @@ $.widget('netsyde.styleTweaker', {
 
     return html;
   },
-
-
-  _getJsPropertyName: function(cssPropertyName){
-    return cssPropertyName.replace(/\-(.)/g, function(match, p1){return p1.toUpperCase();});
-  }, 
 
   // deprecate with above
   _jsPropertyName: function(cssPropertyName){

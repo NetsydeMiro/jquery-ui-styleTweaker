@@ -30,3 +30,4 @@ node_modules
 # Specs are compiled from coffeescript
 spec/styleTweakerSpec.js
 spec/styleTweakerSpec.js.map
+_SpecRunner.html
