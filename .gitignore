@@ -28,6 +28,6 @@ node_modules
 .lock-wscript
 
 # Specs are compiled from coffeescript
-spec/styleTweakerSpec.js
-spec/styleTweakerSpec.js.map
+spec/*.js
+spec/*.js.map
 _SpecRunner.html

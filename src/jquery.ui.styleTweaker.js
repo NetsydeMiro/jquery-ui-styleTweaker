@@ -1,6 +1,5 @@
 $.widget('netsyde.styleTweaker', {
 
-  // default options
   options: {
     targetSelector: 'body',
     propertyFilter: '.*',
@@ -8,123 +7,93 @@ $.widget('netsyde.styleTweaker', {
     html: {
       control:  "<div class='tweaker-control tweak-${property}'></div>", 
       label:    "<label for='tweak-${property}'>${property}</label>", 
-      text:     "<input id='tweak-${property}' type='text' value='${value}' >", 
-      select:   "<select id='tweak-${property}'></select>", 
-      option:   "<option value='${value}'>${value}</option>"  
+      textInput:     "<input id='tweak-${property}' type='text' value='${value}' >", 
+      selectInput:   "<select id='tweak-${property}'></select>", 
+      selectOption:   "<option value='${value}'>${value}</option>"  
     },
 
-    inputBuilders: {
+    // can override creation of inputs:
+    // cssPropertyType can be: bool|color|scalar|discrete|other
+    // discreteOptions will be array of acceptable discrete options 
+    // eg. ['left', 'right', 'both']
+    // input must be jQuery wrapped input with a val() getter/setter and change() event hook
+    // TODO: enable so that user can supply function, but defer to default if a paramter isn't of interest
+    // (primarily cssPropertyType & Name I believe, but could also check for values and options
+    createInput: function(cssPropertyType, cssPropertyName, cssPropertyValue, options){
+      var input;
 
-      get: function(property) {
-        var specificMatch = this[property], 
-            generalMatch = null, 
-            key; 
+      switch (cssPropertyType){
+        case 'scalar': 
+        case 'color': 
+        case 'dimension': 
+        case 'other': 
+          input = this._createTextInput(cssPropertyName, cssPropertyValue);
+          break;
+        case 'discrete': 
+          input = this._createSelectInput(cssPropertyName, cssPropertyValue, options);
+          break;
+      }
 
-        for (key in this){
-          if (property.match(new RegExp(key)) !== null){
-            generalMatch =  this[key];
-            break;
-          }
-        }
-
-        if (specificMatch !== null && generalMatch !== null)
-          return $.extend(true, {}, generalMatch, specificMatch);
-        else if (specificMatch !== null)
-          return specificMatch;
-        else if (generalMatch !== null)
-          return generalMatch;
-        else
-          return null;
-      }, 
-
-      standardActivate: standardActivate =  function(input, changeHandler, activateArgs){
-                                              $(input).change(function(){
-                                                changeHandler($(input).val());
-                                              });
-                                            }, 
-
-      standardText: standardText = 
-      {
-        create:   function(property, value, createArgs){
-                    return $(this._formatHtml(this.options.html.text, {property: property, value: value}));
-                  }, 
-        activate: standardActivate
-      },
-
-      standardSelect: standardSelect = 
-      {
-        create:   function(property, value, createArgs){
-                    var select = $(this._formatHtml(this.options.html.select, {property: property, value: value}));
-                    for(var optionIndex in createArgs.options){
-                      $(this._formatHtml(this.options.html.option, {value: createArgs.options[optionIndex]})).appendTo(select);
-                    }
-                    select.find("option[value='" + value + "']").attr("selected", "selected");
-                    return select;
-                  },
-        activate: standardActivate
-      }, 
-
-      makeSelect: makeSelect = function(){ 
-        var argsArray = $.makeArray(arguments);
-        return $.extend({}, standardSelect, 
-            {createArgs: {options: argsArray.concat(['initial', 'inherit'])}});
-      }, 
-
-      'align-content': makeSelect('stretch', 'center', 'flex-start', 'flex-end',
-          'space-between', 'space-around'), 
-
-      'align-(items|self)': makeSelect('stretch', 'center', 'flex-start', 'flex-end', 'baseline'), 
-
-      'alignment-baseline': makeSelect('auto', 'baseline', 'use-script', 
-          'before-edge', 'text-before-edge', 'after-edge', 'text-after-edge', 
-          'central', 'middle', 'ideographic', 'alphabetic', 'hanging', 'mathematical'), 
-
-      'background-attachment': makeSelect('scroll', 'fixed', 'local'), 
-
-      'background-repeat': makeSelect('repeat', 'repeat-x', 'repeat-y', 'no-repeat'),
-
-      'background-(clip|origin)': makeSelect('border-box', 'padding-box', 'content-box'), 
-
-      'border-collapse': makeSelect('separate', 'collapse'), 
-
-      'border-image-repeat': makeSelect('stretch', 'repeat', 'round', 'space', 
-          'initial', 'inherit'), 
-
-      'border.*style': makeSelect('none', 'hidden', 'dotted', 'dashed', 'solid', 
-          'double', 'groove', 'ridge', 'inset', 'outset'), 
-
-      'caption-side': makeSelect('top', 'bottom'), 
-
-      'clear': makeSelect('none', 'left', 'right', 'both')
-    }
-  },
+      return input;
+    }, 
+  }, 
 
   _create: function() {
 
     var panel = this.element.addClass('tweaker-panel');
     this.target = $(this.options.targetSelector);
 
-    this.propertyFilterFunction = this._getPropertyFilterFunction(this.options.propertyFilter);
+    var propertyPredicate = this._getPropertyPredicate(this.options.propertyFilter);
 
-    var properties = this._getProperties(this.target[0]),
-        propIndex, propName, propValue, 
-        control, inputId, label, input;
+    var properties = this._getCssPropertyNames(this.target[0]).filter(propertyPredicate);
+    var values = this._getCssPropertyValues(this.target[0], properties);
+    
+    var propIndex, propertyType, propertyName, propertyValue, control, inputId, label, input, propertyOptions = null;
 
     for (propIndex in properties){
 
-      property = properties[propIndex][0];
-      value = properties[propIndex][1];
+      propertyName = properties[propIndex];
+      propertyValue = values[propertyName];
+      propertyType = this._cssPropertyInfo.propertyType(propertyName);
 
-      control = this._createControl(property).appendTo(panel);
-      control.append(this._createLabel(property));
+      control = this._createControl(propertyName).appendTo(panel);
+      control.append(this._createLabel(propertyName));
 
-      var builder = (customBuilder = this.options.inputBuilders.get(property)) ? 
-        customBuilder : this.options.inputBuilders.standardText; 
+      switch (propertyType){
+        case 'discrete':
+          propertyOptions = this._cssPropertyInfo.discreteOptions(propertyName);
+          break;
+        case 'scalar':
+          propertyOptions = this._cssPropertyInfo.scalarUnits(propertyName);
+          break;
+      }
 
-        input = builder.create.call(this, property, value, builder.createArgs).appendTo(control);
-        builder.activate.call(this, input, this._standardChangeHandler(this.target[0], property), builder.activateArgs);
+      input = this.options.createInput.call(this, propertyType, propertyName, propertyValue, propertyOptions);
+
+      // TODO: trigger events here, and check if they're cancelled
+      input.change(this._getChangeHandler(this, propertyName, $(input)));
+
+      control.append(input);
     }
   }, 
+
+  _getChangeHandler: function(tweaker, propertyName, $input){
+    return function(){ tweaker.style(propertyName, $input.val());};
+  },
+
+  _createSelectInput: function(property, value, options){
+    var select = $(this._fillFormatString(this.options.html.selectInput, {property: property, value: value}));
+    for (var i in options)
+      select.append($(this._fillFormatString(this.options.html.selectOption, {value: options[i]})));
+
+    select.val(value);
+
+    return select;
+  }, 
+
+  _createTextInput: function(property, value){
+    return $(this._fillFormatString(this.options.html.textInput, {property: property, value: value}));
+  },
 
   // public accessor for getting/setting styles of target
   style: function(cssPropertyName, propertyValue){
@@ -136,7 +105,7 @@ $.widget('netsyde.styleTweaker', {
       this.target.css(cssPropertyName, propertyValue);
   }, 
 
-  _getPropertyFilterFunction: function(propertyFilter){
+  _getPropertyPredicate: function(propertyFilter){
     var fnc;
 
     switch ($.type(propertyFilter)){
@@ -160,18 +129,11 @@ $.widget('netsyde.styleTweaker', {
   }, 
 
   _createControl: function(property){
-    return $(this._formatHtml(this.options.html.control, {property: property}));
+    return $(this._fillFormatString(this.options.html.control, {property: property}));
   }, 
 
   _createLabel: function (property) {
-    return $(this._formatHtml(this.options.html.label, {property: property}));
-  }, 
-
-  _standardChangeHandler: function(target, property){
-      return function(value){
-        $(target).css(property, value); 
-        this._trigger('change', null, {property: property, value: value});
-      }.bind(this);
+    return $(this._fillFormatString(this.options.html.label, {property: property}));
   }, 
 
   _getCssPropertyNames: function(element){
@@ -184,7 +146,7 @@ $.widget('netsyde.styleTweaker', {
     return cssPropertyNames.sort();
   }, 
 
-  _getJsPropertyName: __getJsPropertyName = function(cssPropertyName){
+  _getJsPropertyName: _getJsPropertyName = function(cssPropertyName){
     return cssPropertyName.replace(/\-(.)/g, function(match, p1){return p1.toUpperCase();});
   }, 
 
@@ -194,48 +156,20 @@ $.widget('netsyde.styleTweaker', {
 
     // css property values are stored by their JS property name
     cssPropertyNames.forEach(function(name){
-      propertyValues[name] = computedStyles[__getJsPropertyName(name)];
+      propertyValues[name] = computedStyles[_getJsPropertyName(name)];
     });
 
     return propertyValues;
   },
 
-  // deprecate
-  _getProperties: function(element){
-    var properties = [],
-        propertyBag = document.defaultView.getComputedStyle(element), 
-        key, cssPropertyName, jsPropertyName;
+  _fillFormatString: function(formatString, params){
+    var filled = formatString;
+    for(var paramName in params)
+      filled = filled.replace(new RegExp('\\${' + paramName + '}', 'g'), params[paramName]);
 
-    for (key in propertyBag){
-      if (!isNaN(parseInt(key))){
-        // numeric keys have cssPropertyNames as values
-        cssPropertyName = propertyBag[key];
-        
-        if (this.propertyFilterFunction(cssPropertyName)){
-          // jsPropertyName keys have the actual property values
-          jsPropertyName = this._jsPropertyName(cssPropertyName);
-          // we want to format our properties as 
-          // [[property1, value1], [property2, value2], ...]
-          // so that we can render in alphabetical order
-          properties.push([cssPropertyName, propertyBag[jsPropertyName]]);
-        }
-      }
-    }
-
-    properties.sort(function(a,b){return a[0] < b[0] ? -1 : 1;});
-    return properties;
+    return filled;
   }, 
 
-  _formatHtml: function(html, params){
-    for(var paramName in params)
-      html = html.replace(new RegExp('\\${' + paramName + '}', 'g'), params[paramName]);
-
-    return html;
-  },
-
-  // deprecate with above
-  _jsPropertyName: function(cssPropertyName){
-    return cssPropertyName.replace(/\-(.)/g, function(match, p1){return p1.toUpperCase();});
-  }
+  _cssPropertyInfo: new CssPropertyInfo()
 
 });
