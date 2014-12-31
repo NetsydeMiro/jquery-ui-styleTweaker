@@ -58,6 +58,43 @@ describe 'styleTweaker', ->
       tweakerInstance.style('border-bottom-width', '30px')
       expect($div.css('border-bottom-width')).toEqual '30px'
 
+  describe 'control initialization', -> 
+    beforeEach -> 
+      $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target')
+
+    it 'initializes inputs ', -> 
+      input = $div.children('.tweak-border-top-width').children('input')
+      expect(input.val()).toEqual '10px'
+
+    it 'initializes select dropdowns', -> 
+      select = $div.children('.tweak-border-top-style').children('select')
+      expect(select.val()).toEqual 'solid'
+
+    it 'initializes select dropdown options', -> 
+      $options = $div.children('.tweak-clear').children('select').children('option')
+      options = $options.toArray().map((val, i) -> val.text).sort()
+      expect(options).toEqual ['both', 'inherit', 'initial', 'left', 'none', 'right']
+
+  describe 'control interactions', -> 
+    beforeEach -> 
+      $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target')
+
+    it 'changes styles when inputs changed', -> 
+      expect($div.css('border-top-width')).toEqual '10px'
+
+      input = $div.children('.tweak-border-top-width').children('input')
+      input.val('20px').change()
+      expect($div.css('border-bottom-width')).toEqual '10px'
+      expect($div.css('border-top-width')).toEqual '20px'
+
+    it 'changes styles when selects changed', -> 
+      expect($div.css('border-top-style')).toEqual 'solid'
+
+      select = $div.children('.tweak-border-top-style').children('select')
+      select.val('dashed').change()
+      expect($div.css('border-bottom-style')).toEqual 'solid'
+      expect($div.css('border-top-style')).toEqual 'dashed'
+
   describe '#_getCssPropertyNames()', -> 
     fnc = $.netsyde.styleTweaker.prototype._getCssPropertyNames
 

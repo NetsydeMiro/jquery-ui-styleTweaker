@@ -104,21 +104,7 @@ $.widget('netsyde.styleTweaker', {
     var panel = this.element.addClass('tweaker-panel');
     this.target = $(this.options.targetSelector);
 
-    switch ($.type(this.options.propertyFilter)){
-      case 'string': 
-        this.propertyFilterFunction = function(cssPropertyName){
-          return cssPropertyName.match(this.options.propertyFilter);
-        };
-        break;
-      case 'function': 
-        this.propertyFilterFunction = this.options.propertyFilter;
-        break;
-      default: 
-        throw 'option targetSelector must be a regex string or string predicate function';
-    }
-
-    //var panel = this._createPanel().appendTo($(this.element[0])), 
-        //target = this.options.target ? this.options.target[0] : panel,
+    this.propertyFilterFunction = this._getPropertyFilterFunction(this.options.propertyFilter);
 
     var properties = this._getProperties(this.target[0]),
         propIndex, propName, propValue, 
@@ -140,6 +126,7 @@ $.widget('netsyde.styleTweaker', {
     }
   }, 
 
+  // public accessor for getting/setting styles of target
   style: function(cssPropertyName, propertyValue){
     //getter
     if (!propertyValue)
@@ -147,6 +134,25 @@ $.widget('netsyde.styleTweaker', {
     //setter
     else
       this.target.css(cssPropertyName, propertyValue);
+  }, 
+
+  _getPropertyFilterFunction: function(propertyFilter){
+    var fnc;
+
+    switch ($.type(propertyFilter)){
+      case 'string': 
+        fnc = function(cssPropertyName){
+          return cssPropertyName.match(propertyFilter);
+        };
+        break;
+      case 'function': 
+        fnc = propertyFilter;
+        break;
+      default: 
+        throw 'option targetSelector must be a regex string or string predicate function';
+    }
+
+    return fnc;
   }, 
 
   _createPanel: function(){
