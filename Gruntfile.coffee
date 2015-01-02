@@ -42,7 +42,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'compile', ['coffee']
   grunt.registerTask 'test', ['jshint', 'jasmine:prod']
-  grunt.registerTask 'test:dev', ['jasmine:dev']
+  grunt.registerTask 'test:dev', ['jshint', 'jasmine:dev']
 
   grunt.registerTask 'default', ['compile', 'test']
   grunt.registerTask 'travis', ['default']

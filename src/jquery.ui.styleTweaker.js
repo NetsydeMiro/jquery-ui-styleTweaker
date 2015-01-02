@@ -24,7 +24,6 @@ $.widget('netsyde.styleTweaker', {
 
   _create: function() {
 
-    var tweaker = this
     var panel = this.element.addClass('tweaker-panel');
     this.target = $(this.options.targetSelector);
 
@@ -55,14 +54,7 @@ $.widget('netsyde.styleTweaker', {
 
       $input = this.options.createInput.call(this, propertyType, propertyName, propertyValue, propertyOptions);
 
-      // TODO: trigger events here, and check if they're cancelled
       $input.change(this._getChangeHandler(this, propertyName, $input));
-      /*
-      $input.change(function(evt){
-          tweaker._trigger('change', evt, {property: propertyName});
-          tweaker.style(propertyName, $(this).val());
-      });
-      */
 
       control.append($input);
     }
