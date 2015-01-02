@@ -13,33 +13,18 @@ $.widget('netsyde.styleTweaker', {
     },
 
     // can override creation of inputs:
-    // cssPropertyType can be: bool|color|scalar|discrete|other
-    // discreteOptions will be array of acceptable discrete options 
-    // eg. ['left', 'right', 'both']
-    // input must be jQuery wrapped input with a val() getter/setter and change() event hook
-    // TODO: enable so that user can supply function, but defer to default if a paramter isn't of interest
-    // (primarily cssPropertyType & Name I believe, but could also check for values and options
+    // cssPropertyType: bool|color|scalar|discrete|other
+    // options will be array of acceptable discrete options, or scalar units
+    // eg. ['left', 'right', 'both'] or ['px', 'em', '%']
+    // returned result should be jQuery wrapped input with a val() getter/setter and change() event hook
     createInput: function(cssPropertyType, cssPropertyName, cssPropertyValue, options){
-      var input;
-
-      switch (cssPropertyType){
-        case 'scalar': 
-        case 'color': 
-        case 'dimension': 
-        case 'other': 
-          input = this._createTextInput(cssPropertyName, cssPropertyValue);
-          break;
-        case 'discrete': 
-          input = this._createSelectInput(cssPropertyName, cssPropertyValue, options);
-          break;
-      }
-
-      return input;
-    }, 
+      return this._createInput(cssPropertyType, cssPropertyName, cssPropertyValue, options);
+    }
   }, 
 
   _create: function() {
 
+    var tweaker = this
     var panel = this.element.addClass('tweaker-panel');
     this.target = $(this.options.targetSelector);
 
@@ -68,17 +53,41 @@ $.widget('netsyde.styleTweaker', {
           break;
       }
 
-      input = this.options.createInput.call(this, propertyType, propertyName, propertyValue, propertyOptions);
+      $input = this.options.createInput.call(this, propertyType, propertyName, propertyValue, propertyOptions);
 
       // TODO: trigger events here, and check if they're cancelled
-      input.change(this._getChangeHandler(this, propertyName, $(input)));
+      $input.change(this._getChangeHandler(this, propertyName, $input));
+      /*
+      $input.change(function(evt){
+          tweaker._trigger('change', evt, {property: propertyName});
+          tweaker.style(propertyName, $(this).val());
+      });
+      */
 
-      control.append(input);
+      control.append($input);
     }
   }, 
 
-  _getChangeHandler: function(tweaker, propertyName, $input){
-    return function(){ tweaker.style(propertyName, $input.val());};
+  _createInput: function(cssPropertyType, cssPropertyName, cssPropertyValue, options){
+    var input;
+
+    switch (cssPropertyType){
+      case 'discrete': 
+        input = this._createSelectInput(cssPropertyName, cssPropertyValue, options);
+        break;
+      case 'bool':
+      case 'scalar': 
+      case 'color': 
+      case 'other': 
+        input = this._createTextInput(cssPropertyName, cssPropertyValue);
+        break;
+    }
+
+    return input;
+  }, 
+
+  _createTextInput: function(property, value){
+    return $(this._fillFormatString(this.options.html.textInput, {property: property, value: value}));
   },
 
   _createSelectInput: function(property, value, options){
@@ -91,8 +100,12 @@ $.widget('netsyde.styleTweaker', {
     return select;
   }, 
 
-  _createTextInput: function(property, value){
-    return $(this._fillFormatString(this.options.html.textInput, {property: property, value: value}));
+  _getChangeHandler: function(tweaker, propertyName, $input){
+    return function(e){ 
+      var val = $input.val();
+      if (tweaker._trigger('change', e, {property: propertyName, value: val}))
+        tweaker.style(propertyName, val);
+    };
   },
 
   // public accessor for getting/setting styles of target
@@ -150,6 +163,7 @@ $.widget('netsyde.styleTweaker', {
     return cssPropertyName.replace(/\-(.)/g, function(match, p1){return p1.toUpperCase();});
   }, 
 
+  //TODO: break this out into CssProperty, and make seperate project
   _getCssPropertyValues: function(element, cssPropertyNames){
     var computedStyles = document.defaultView.getComputedStyle(element);
     var propertyValues = {};
