@@ -31,3 +31,7 @@ node_modules
 spec/*.js
 spec/*.js.map
 _SpecRunner.html
+
+# Jekyll stuff from gh-pages branch
+.sass-cache
+_site
