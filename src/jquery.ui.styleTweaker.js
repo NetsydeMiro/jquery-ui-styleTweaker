@@ -13,12 +13,16 @@ $.widget('netsyde.styleTweaker', {
     },
 
     // can override creation of inputs:
+    // 'this' argument is the styleTweaker
+    // $parentControl: jQuery wrapped div which houses input label, and to which input should be attached
     // cssPropertyType: bool|color|scalar|discrete|other
     // options will be array of acceptable discrete options, or scalar units
     // eg. ['left', 'right', 'both'] or ['px', 'em', '%']
-    // returned result should be jQuery wrapped input with a val() getter/setter and change() event hook
-    createInput: function(cssPropertyType, cssPropertyName, cssPropertyValue, options){
-      return this._createInput(cssPropertyType, cssPropertyName, cssPropertyValue, options);
+    // should return jQuery wrapped input
+    createInput: function($parentControl, cssPropertyType, cssPropertyName, 
+                     cssPropertyValue, cssPropertyOptions){
+      return this._createInput($parentControl, cssPropertyType, cssPropertyName, 
+          cssPropertyValue, cssPropertyOptions);
     }
   }, 
 
@@ -32,7 +36,8 @@ $.widget('netsyde.styleTweaker', {
     var properties = this._getCssPropertyNames(this.target[0]).filter(propertyPredicate);
     var values = this._getCssPropertyValues(this.target[0], properties);
     
-    var propIndex, propertyType, propertyName, propertyValue, control, inputId, label, input, propertyOptions = null;
+    var propIndex, propertyType, propertyName, propertyValue, control, inputId, label, 
+        input, propertyOptions = null;
 
     for (propIndex in properties){
 
@@ -52,15 +57,22 @@ $.widget('netsyde.styleTweaker', {
           break;
       }
 
-      $input = this.options.createInput.call(this, propertyType, propertyName, propertyValue, propertyOptions);
+      input = this.options.createInput.call(this, control, propertyType, propertyName, 
+          propertyValue, propertyOptions);
 
-      $input.change(this._getChangeHandler(this, propertyName, $input));
-
-      control.append($input);
+      this._trigger('inputcreated', null, {
+        tweaker: this,
+        $parentControl: control, 
+        $input: input, 
+        cssPropertyType: propertyType, 
+        cssPropertyName: propertyName, 
+        cssPropertyValue: propertyValue, 
+        cssPropertyOptions: propertyOptions});
     }
   }, 
 
-  _createInput: function(cssPropertyType, cssPropertyName, cssPropertyValue, options){
+  _createInput: function($parentControl, cssPropertyType, cssPropertyName, cssPropertyValue, options){
+    var tweaker = this;
     var input;
 
     switch (cssPropertyType){
@@ -74,6 +86,15 @@ $.widget('netsyde.styleTweaker', {
         input = this._createTextInput(cssPropertyName, cssPropertyValue);
         break;
     }
+
+    $parentControl.append(input);
+
+    input.change(function(e){
+      var newPropertyValue = $(this).val();
+      if (tweaker._trigger('change', e, {tweaker: tweaker, cssPropertyName: cssPropertyName, 
+        cssPropertyValue: newPropertyValue}))
+        tweaker.style(cssPropertyName, newPropertyValue);
+    });
 
     return input;
   }, 
@@ -91,14 +112,6 @@ $.widget('netsyde.styleTweaker', {
 
     return select;
   }, 
-
-  _getChangeHandler: function(tweaker, propertyName, $input){
-    return function(e){ 
-      var val = $input.val();
-      if (tweaker._trigger('change', e, {property: propertyName, value: val}))
-        tweaker.style(propertyName, val);
-    };
-  },
 
   // public accessor for getting/setting styles of target
   style: function(cssPropertyName, propertyValue){
