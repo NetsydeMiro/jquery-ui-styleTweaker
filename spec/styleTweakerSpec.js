@@ -129,72 +129,107 @@
       beforeEach(function() {
         return spy = jasmine.createSpy('spy');
       });
-      it('can hook to change callback via constructor', function() {
-        var input;
-        $div.styleTweaker({
-          targetSelector: '#target',
-          change: spy
+      describe('change event', function() {
+        it('can hook to change callback via constructor', function() {
+          var input;
+          $div.styleTweaker({
+            targetSelector: '#target',
+            change: spy
+          });
+          input = $div.children('.tweak-border-top-width').children('input');
+          input.val('20px').change();
+          return expect(spy.calls.count()).toEqual(1);
         });
-        input = $div.children('.tweak-border-top-width').children('input');
-        input.val('20px').change();
-        return expect(spy.calls.count()).toEqual(1);
-      });
-      it('can hook to change event via bind', function() {
-        var select;
-        $div.styleTweaker().bind('styletweakerchange', spy);
-        select = $div.children('.tweak-border-top-style').children('select');
-        select.val('dashed').change();
-        return expect(spy.calls.count()).toEqual(1);
-      });
-      it('receives correct arguments via callback', function() {
-        var args, input;
-        $div.styleTweaker({
-          targetSelector: '#target',
-          change: spy
+        it('can hook to change event via bind', function() {
+          var select;
+          $div.styleTweaker().bind('styletweakerchange', spy);
+          select = $div.children('.tweak-border-top-style').children('select');
+          select.val('dashed').change();
+          return expect(spy.calls.count()).toEqual(1);
         });
-        input = $div.children('.tweak-border-top-width').children('input');
-        input.val('20px').change();
-        args = spy.calls.argsFor(0);
-        return expect(args[1]).toEqual({
-          property: 'border-top-width',
-          value: '20px'
+        it('receives correct arguments via callback', function() {
+          var call, data, input, obj;
+          $div.styleTweaker({
+            targetSelector: '#target',
+            change: spy
+          });
+          input = $div.children('.tweak-border-top-width').children('input');
+          input.val('20px').change();
+          call = spy.calls.mostRecent();
+          obj = call.object;
+          data = call.args[1];
+          expect(obj).toBe($div[0]);
+          expect(data.tweaker).toBe($div.styleTweaker('instance'));
+          expect(data.cssPropertyName).toEqual('border-top-width');
+          return expect(data.cssPropertyValue).toEqual('20px');
+        });
+        it('receives correct arguments via event', function() {
+          var call, data, obj, select;
+          $div.styleTweaker().bind('styletweakerchange', spy);
+          select = $div.children('.tweak-border-top-style').children('select');
+          select.val('dashed').change();
+          call = spy.calls.mostRecent();
+          obj = call.object;
+          data = call.args[1];
+          expect(obj).toBe($div[0]);
+          expect(data.tweaker).toBe($div.styleTweaker('instance'));
+          expect(data.cssPropertyName).toEqual('border-top-style');
+          return expect(data.cssPropertyValue).toEqual('dashed');
+        });
+        it('can cancel change via callback', function() {
+          var input;
+          spy = function() {
+            return false;
+          };
+          $div.css('border', 'solid 10px red').styleTweaker({
+            targetSelector: '#target',
+            change: spy
+          });
+          input = $div.children('.tweak-border-top-width').children('input');
+          input.val('20px').change();
+          return expect($div.css('border-top-width')).toEqual('10px');
+        });
+        return it('can cancel change via event', function() {
+          var input;
+          spy = function() {
+            return false;
+          };
+          $div.css('border', 'solid 10px red').styleTweaker({
+            targetSelector: '#target'
+          }).bind('styletweakerchange', spy);
+          input = $div.children('.tweak-border-top-width').children('input');
+          input.val('20px').change();
+          return expect($div.css('border-top-width')).toEqual('10px');
         });
       });
-      it('receives correct arguments via event', function() {
-        var args, select;
-        $div.styleTweaker().bind('styletweakerchange', spy);
-        select = $div.children('.tweak-border-top-style').children('select');
-        select.val('dashed').change();
-        args = spy.calls.argsFor(0);
-        return expect(args[1]).toEqual({
-          property: 'border-top-style',
-          value: 'dashed'
+      return describe('input created event', function() {
+        it('can hook to input created callback via constructor', function() {
+          $div.styleTweaker({
+            targetSelector: '#target'
+          }, {
+            propertyFilter: 'border.*color',
+            inputcreated: spy
+          });
+          return expect(spy.calls.count()).toEqual(4);
         });
-      });
-      it('can cancel change via callback', function() {
-        var input;
-        spy = function() {
-          return false;
-        };
-        $div.css('border', 'solid 10px red').styleTweaker({
-          targetSelector: '#target',
-          change: spy
+        return it('receives correct arguments via callback', function() {
+          var call, data;
+          $div.css('border-style', 'dashed').styleTweaker({
+            targetSelector: '#target'
+          }, {
+            propertyFilter: 'border-top-style',
+            inputcreated: spy
+          });
+          expect(spy.calls.count()).toEqual(1);
+          call = spy.calls.mostRecent();
+          data = call.args[1];
+          expect(call.object).toBe($div[0]);
+          expect(data['tweaker']).toBe($div.styleTweaker('instance'));
+          expect(data['cssPropertyType']).toEqual('discrete');
+          expect(data['cssPropertyName']).toEqual('border-top-style');
+          expect(data['cssPropertyValue']).toEqual('dashed');
+          return expect(data['cssPropertyOptions']).toEqual(['none', 'hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset', 'initial', 'inherit']);
         });
-        input = $div.children('.tweak-border-top-width').children('input');
-        input.val('20px').change();
-        return expect($div.css('border-top-width')).toEqual('10px');
-      });
-      return it('can cancel change via event', function() {
-        var input;
-        spy = function() {
-          return false;
-        };
-        $div.css('border', 'solid 10px red').styleTweaker({
-          targetSelector: '#target'
-        }).bind('styletweakerchange', spy);
-        input = $div.children('.tweak-border-top-width').children('input');
-        input.val('20px').change();
-        return expect($div.css('border-top-width')).toEqual('10px');
       });
     });
     describe('#_getCssPropertyNames()', function() {

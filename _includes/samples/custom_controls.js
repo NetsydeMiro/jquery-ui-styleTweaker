@@ -1,13 +1,11 @@
 $('#tweaker-custom-controls').styleTweaker({
   targetSelector: '#target-custom-controls', 
-  propertyFilter: '.*color',
-  createInput: function(type, name, value, options, container){
-    if (type == 'color'){
-      var textInput = this._createTextInput(type, name, value, options);
-      textInput.spectrum({appendTo: container});
-      return textInput;
+  propertyFilter: '^(?!-webkit).*color$',
+  inputcreated: function(e, data){
+    if (data.cssPropertyType == 'color'){
+      data.$input.spectrum().change(function(e,color){
+        data.tweaker.style(data.cssPropertyName, color.toRgbString());
+      });
     }
-    else
-      return this._createInput(type, name, value, options);  
   }
 });

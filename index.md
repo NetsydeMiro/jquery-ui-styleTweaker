@@ -50,3 +50,28 @@ Default html is:
 
 {% endhighlight %}
 
+## Customizing Controls
+
+For more fine-grained customization, you can hook into the ```inputcreated``` event to tinker with 
+the jQuery control that was created.
+
+{% include jsLoadWrap.html snippet='samples/custom_controls.js' %}
+{% include jsSampleWrap.html snippet='samples/custom_controls.js' %}
+{% include samples/custom_controls.html %}
+
+The data argument passed to the event is: 
+
+{% highlight javascript %}
+
+  data: {
+    tweaker,            // the styleTweaker instance
+    $parentControl,     // the input's jQuery wrapped container
+    $input,             // jQuery wrapped input
+    cssPropertyType,  
+    cssPropertyName,
+    cssPropertyValue,
+    cssPropertyOptions  // discrete property's possible values or
+                        // scalar property's possible units
+  }
+
+{% endhighlight %}
