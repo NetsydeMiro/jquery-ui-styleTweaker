@@ -102,46 +102,81 @@ describe 'styleTweaker', ->
     beforeEach -> 
       spy = jasmine.createSpy('spy')
 
-    it 'can hook to change callback via constructor', -> 
-      $div.styleTweaker(targetSelector: '#target', change: spy)
-      input = $div.children('.tweak-border-top-width').children('input')
-      input.val('20px').change()
-      expect(spy.calls.count()).toEqual 1
+    describe 'change event', -> 
+      it 'can hook to change callback via constructor', -> 
+        $div.styleTweaker(targetSelector: '#target', change: spy)
+        input = $div.children('.tweak-border-top-width').children('input')
+        input.val('20px').change()
+        expect(spy.calls.count()).toEqual 1
 
-    it 'can hook to change event via bind', -> 
-      $div.styleTweaker().bind('styletweakerchange', spy)
-      select = $div.children('.tweak-border-top-style').children('select')
-      select.val('dashed').change()
-      expect(spy.calls.count()).toEqual 1
+      it 'can hook to change event via bind', -> 
+        $div.styleTweaker().bind('styletweakerchange', spy)
+        select = $div.children('.tweak-border-top-style').children('select')
+        select.val('dashed').change()
+        expect(spy.calls.count()).toEqual 1
 
-    it 'receives correct arguments via callback', -> 
-      $div.styleTweaker(targetSelector: '#target', change: spy)
-      input = $div.children('.tweak-border-top-width').children('input')
-      input.val('20px').change()
-      args = spy.calls.argsFor(0)
-      expect(args[1]).toEqual {property: 'border-top-width', value: '20px'}
+      it 'receives correct arguments via callback', -> 
+        $div.styleTweaker(targetSelector: '#target', change: spy)
+        input = $div.children('.tweak-border-top-width').children('input')
+        input.val('20px').change()
+        call = spy.calls.mostRecent()
+        obj = call.object
+        data = call.args[1]
+        expect(obj).toBe $div[0]
+        expect(data.tweaker).toBe $div.styleTweaker('instance')
+        expect(data.cssPropertyName).toEqual 'border-top-width'
+        expect(data.cssPropertyValue).toEqual '20px'
 
-    it 'receives correct arguments via event', -> 
-      $div.styleTweaker().bind('styletweakerchange', spy)
-      select = $div.children('.tweak-border-top-style').children('select')
-      select.val('dashed').change()
-      args = spy.calls.argsFor(0)
-      expect(args[1]).toEqual {property: 'border-top-style', value: 'dashed'}
+      it 'receives correct arguments via event', -> 
+        $div.styleTweaker().bind('styletweakerchange', spy)
+        select = $div.children('.tweak-border-top-style').children('select')
+        select.val('dashed').change()
+        call = spy.calls.mostRecent()
+        obj = call.object
+        data = call.args[1]
+        expect(obj).toBe $div[0]
+        expect(data.tweaker).toBe $div.styleTweaker('instance')
+        expect(data.cssPropertyName).toEqual 'border-top-style'
+        expect(data.cssPropertyValue).toEqual 'dashed'
 
-    it 'can cancel change via callback', -> 
-      spy = -> false
-      $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target', change: spy)
-      input = $div.children('.tweak-border-top-width').children('input')
-      input.val('20px').change()
-      expect($div.css('border-top-width')).toEqual '10px'
+      it 'can cancel change via callback', -> 
+        spy = -> false
+        $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target', change: spy)
+        input = $div.children('.tweak-border-top-width').children('input')
+        input.val('20px').change()
+        expect($div.css('border-top-width')).toEqual '10px'
 
-    it 'can cancel change via event', -> 
-      spy = -> false
-      $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target').
-        bind('styletweakerchange', spy)
-      input = $div.children('.tweak-border-top-width').children('input')
-      input.val('20px').change()
-      expect($div.css('border-top-width')).toEqual '10px'
+      it 'can cancel change via event', -> 
+        spy = -> false
+        $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target').
+          bind('styletweakerchange', spy)
+        input = $div.children('.tweak-border-top-width').children('input')
+        input.val('20px').change()
+        expect($div.css('border-top-width')).toEqual '10px'
+
+    describe 'input created event', -> 
+      it 'can hook to input created callback via constructor', -> 
+        $div.styleTweaker(targetSelector: '#target', 
+          propertyFilter: 'border.*color', 
+          inputcreated: spy)
+        expect(spy.calls.count()).toEqual 4
+
+      it 'receives correct arguments via callback', -> 
+        $div.css('border-style', 'dashed').styleTweaker(targetSelector: '#target', 
+          propertyFilter: 'border-top-style', 
+          inputcreated: spy)
+        expect(spy.calls.count()).toEqual 1
+        call = spy.calls.mostRecent()
+        data = call.args[1]
+        expect(call.object).toBe $div[0]
+        expect(data['tweaker']).toBe $div.styleTweaker('instance')
+        expect(data['cssPropertyType']).toEqual 'discrete'
+        expect(data['cssPropertyName']).toEqual 'border-top-style'
+        expect(data['cssPropertyValue']).toEqual 'dashed'
+        expect(data['cssPropertyOptions']).toEqual [ 'none', 'hidden', 'dotted', 
+          'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset', 
+          'initial', 'inherit' ]
+
 
   describe '#_getCssPropertyNames()', -> 
     fnc = $.netsyde.styleTweaker.prototype._getCssPropertyNames
