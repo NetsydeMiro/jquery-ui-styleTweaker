@@ -1,0 +1,15 @@
+{% assign js_path = 'samples/' | append: 'default' | append: '.js' %}
+{% assign html_path = 'samples/' | append: 'default' | append: '.html' %}
+
+JS Path Parts: 
+
+{{ js_path }}
+{{ html_path }}
+
+{% comment %}
+{% include jsLoadWrap.html snippet='{{js_path}}' %}
+
+{% include jsSampleWrap.html snippet='{{js_path}}' %}
+
+{% include {{html_path}} %}
+{% endcomment %}

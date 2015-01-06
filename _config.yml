@@ -1,0 +1,14 @@
+# Site settings
+title: StyleTweaker
+email: miro@netsyde.com
+description: > # this means to ignore newlines until "baseurl:"
+  A widget for manual CSS adjustments.
+baseurl: "/jquery-ui-styleTweaker" # the subpath of your site, e.g. /blog/
+url: "http://netsydemiro.github.io" # the base hostname & protocol for your site
+github_username:  NetsydeMiro
+
+# Build settings
+markdown: kramdown
+#highlighter: rouge
+
+include: ['.grunt']

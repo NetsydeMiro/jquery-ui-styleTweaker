@@ -1,0 +1,1 @@
+$('#tweaker').styleTweaker({targetSelector: '#target'});
