@@ -5,11 +5,11 @@ $.widget('netsyde.styleTweaker', {
     propertyFilter: '.*',
 
     html: {
-      control:  "<div class='tweaker-control tweak-${property}'></div>", 
-      label:    "<label for='tweak-${property}'>${property}</label>", 
-      textInput:     "<input id='tweak-${property}' type='text' value='${value}' >", 
-      selectInput:   "<select id='tweak-${property}'></select>", 
-      selectOption:   "<option value='${value}'>${value}</option>"  
+      control:      "<div class='tweaker-control tweak-${property}'></div>", 
+      label:        "<label for='tweak-${property}'>${property}</label>", 
+      textInput:    "<input id='tweak-${property}' type='text' value='${value}' >", 
+      selectInput:  "<select id='tweak-${property}'></select>", 
+      selectOption: "<option value='${value}'>${value}</option>"  
     },
 
     // can override creation of inputs:
