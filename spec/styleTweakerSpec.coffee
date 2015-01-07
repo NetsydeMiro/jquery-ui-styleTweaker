@@ -58,6 +58,19 @@ describe 'styleTweaker', ->
       tweakerInstance.style('border-bottom-width', '30px')
       expect($div.css('border-bottom-width')).toEqual '30px'
 
+  describe '#refreshInput()', -> 
+    tweakerInstance = null
+
+    beforeEach -> 
+      $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target')
+      tweakerInstance = $div.styleTweaker('instance')
+
+    it 'refreshes the input', -> 
+      $div.css('border-bottom-width', '20px')
+      expect($div.find('.tweak-border-bottom-width input').val()).toEqual '10px'
+      tweakerInstance.refreshInput('border-bottom-width')
+      expect($div.find('.tweak-border-bottom-width input').val()).toEqual '20px'
+
   describe 'control initialization', -> 
     beforeEach -> 
       $div.css('border', 'solid 10px red').styleTweaker(targetSelector: '#target')

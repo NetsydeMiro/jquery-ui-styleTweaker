@@ -34,11 +34,27 @@ module.exports = (grunt) ->
         options:
           specs: 'spec/*Spec.js'
           vendor: ['lib/jquery-2.1.3.js', 'lib/jquery-ui-1.11.2-core.js']
+    exec: 
+      pushtodemo:
+        cmd:
+          # first we push changes to demo site, then we commit all branches
+          [
+            'git checkout gh-pages', 
+            'git checkout master src/CssPropertyInfo.js src/jquery.ui.styleTweaker.js',
+            'git checkout master spec/CssPropertyInfoSpec.coffee',
+            'git checkout master spec/styleTweakerSpec.coffee',
+
+            'grunt compile',
+
+            'git add -A && git commit -a -m "merging updates"',
+            'git checkout master'
+          ].join ' && '
   
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-watch'
   grunt.loadNpmTasks 'grunt-contrib-jshint'
   grunt.loadNpmTasks 'grunt-contrib-jasmine'
+  grunt.loadNpmTasks 'grunt-exec'
 
   grunt.registerTask 'compile', ['coffee']
   grunt.registerTask 'test', ['jshint', 'jasmine:prod']

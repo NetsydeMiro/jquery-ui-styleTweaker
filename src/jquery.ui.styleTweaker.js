@@ -26,6 +26,8 @@ $.widget('netsyde.styleTweaker', {
     }
   }, 
 
+  _inputs: {},
+
   _create: function() {
 
     var panel = this.element.addClass('tweaker-panel');
@@ -59,6 +61,8 @@ $.widget('netsyde.styleTweaker', {
 
       input = this.options.createInput.call(this, control, propertyType, propertyName, 
           propertyValue, propertyOptions);
+
+      this._inputs[propertyName] = input;
 
       this._trigger('inputcreated', null, {
         tweaker: this,
@@ -121,6 +125,11 @@ $.widget('netsyde.styleTweaker', {
     //setter
     else
       this.target.css(cssPropertyName, propertyValue);
+  }, 
+
+  // public utility method to synch input control with target state
+  refreshInput: function(cssPropertyName){
+    this._inputs[cssPropertyName].val(this.target.css(cssPropertyName));
   }, 
 
   _getPropertyPredicate: function(propertyFilter){
