@@ -1,6 +1,6 @@
 $('#tweaker-custom-change').styleTweaker({
   targetSelector: '#target-custom-change', 
-  propertyFilter: 'shadow$',
+  propertyFilter: '(max-|min-|^)width',
   change: function(e, data){
     if (!window.confirm("Are you sure you want to change " + 
                    data.cssPropertyName + " to " + 

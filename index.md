@@ -24,11 +24,15 @@ If more control is required, a predicate function can also be used.  The followi
 
 ## Change Event
 
-You can hook into styleTweaker's change event using either it's constructor or jQuery's ```bind``` pattern.
+Custom change event processing can be accomplished by hooking into styleTweaker's change event. 
 
-{% include jsSampleWrap.html snippet='samples/custom_change.js' %}
-{% include jsLoadWrap.html snippet='samples/custom_change.js' %}
+{% include jsSampleWrap.html snippet='samples/custom_change_constructor.js' %}
+{% include jsLoadWrap.html snippet='samples/custom_change_constructor.js' %}
 {% include samples/custom_change.html %}
+
+An existing StyleTweaker instance's change event can be tapped by using jQuery's ```bind``` formalism.
+
+{% include jsSampleWrap.html snippet='samples/custom_change_bind.js' %}
 
 ## Customizing Tweaker HTML
 
@@ -78,3 +82,12 @@ The data argument passed to the ```inputcreated``` handler is:
   }                     // scalar property's possible units
 
 {% endhighlight %}
+
+## More On StyleTweaker
+
+Code [lives here](https://github.com/NetsydeMiro/jquery-ui-styleTweaker).
+
+Tests [run here]({{site.baseurl}}/tests/).
+
+Builds [execute here](https://travis-ci.org/NetsydeMiro/jquery-ui-styleTweaker).
+
