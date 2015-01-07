@@ -75,6 +75,22 @@
         return expect($div.css('border-bottom-width')).toEqual('30px');
       });
     });
+    describe('#refreshInput()', function() {
+      var tweakerInstance;
+      tweakerInstance = null;
+      beforeEach(function() {
+        $div.css('border', 'solid 10px red').styleTweaker({
+          targetSelector: '#target'
+        });
+        return tweakerInstance = $div.styleTweaker('instance');
+      });
+      return it('refreshes the input', function() {
+        $div.css('border-bottom-width', '20px');
+        expect($div.find('.tweak-border-bottom-width input').val()).toEqual('10px');
+        tweakerInstance.refreshInput('border-bottom-width');
+        return expect($div.find('.tweak-border-bottom-width input').val()).toEqual('20px');
+      });
+    });
     describe('control initialization', function() {
       beforeEach(function() {
         return $div.css('border', 'solid 10px red').styleTweaker({

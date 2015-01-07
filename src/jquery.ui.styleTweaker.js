@@ -5,11 +5,11 @@ $.widget('netsyde.styleTweaker', {
     propertyFilter: '.*',
 
     html: {
-      control:  "<div class='tweaker-control tweak-${property}'></div>", 
-      label:    "<label for='tweak-${property}'>${property}</label>", 
-      textInput:     "<input id='tweak-${property}' type='text' value='${value}' >", 
-      selectInput:   "<select id='tweak-${property}'></select>", 
-      selectOption:   "<option value='${value}'>${value}</option>"  
+      control:      "<div class='tweaker-control tweak-${property}'></div>", 
+      label:        "<label for='tweak-${property}'>${property}</label>", 
+      textInput:    "<input id='tweak-${property}' type='text' value='${value}' >", 
+      selectInput:  "<select id='tweak-${property}'></select>", 
+      selectOption: "<option value='${value}'>${value}</option>"  
     },
 
     // can override creation of inputs:
@@ -25,6 +25,8 @@ $.widget('netsyde.styleTweaker', {
           cssPropertyValue, cssPropertyOptions);
     }
   }, 
+
+  _inputs: {},
 
   _create: function() {
 
@@ -59,6 +61,8 @@ $.widget('netsyde.styleTweaker', {
 
       input = this.options.createInput.call(this, control, propertyType, propertyName, 
           propertyValue, propertyOptions);
+
+      this._inputs[propertyName] = input;
 
       this._trigger('inputcreated', null, {
         tweaker: this,
@@ -121,6 +125,11 @@ $.widget('netsyde.styleTweaker', {
     //setter
     else
       this.target.css(cssPropertyName, propertyValue);
+  }, 
+
+  // public utility method to synch input control with target state
+  refreshInput: function(cssPropertyName){
+    this._inputs[cssPropertyName].val(this.target.css(cssPropertyName));
   }, 
 
   _getPropertyPredicate: function(propertyFilter){
